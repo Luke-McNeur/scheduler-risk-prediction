@@ -1,0 +1,6 @@
+﻿caregiver_id,caregiver_name,completion_rate,Appointments,Appointments 2,Appointments 3
+CG001,Maria Santos,95%,"APT001,APT005,APT010",,
+CG002,John Williams,85%,"APT003,APT008",,
+CG003,Sarah Chen,72%,"APT002,APT007",,
+CG004,David Martinez,88%,APT006,,
+CG005,Lisa Thompson,65%,"APT004,APT009",,
