@@ -1,0 +1,472 @@
+{
+  "name": "Shift Coverage Predictor",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "0e1f62c4-bc40-44f3-8337-70f1fbeb5871",
+      "name": "When clicking 'Test workflow'",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -144,
+        108
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "app6L0m1D3pqV0YfO",
+          "mode": "list",
+          "cachedResultName": "Scheduler POC",
+          "cachedResultUrl": "https://airtable.com/app6L0m1D3pqV0YfO"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbl85nXM3cn31KzYd",
+          "mode": "list",
+          "cachedResultName": "Appointments",
+          "cachedResultUrl": "https://airtable.com/app6L0m1D3pqV0YfO/tbl85nXM3cn31KzYd"
+        },
+        "options": {}
+      },
+      "id": "a5439c6c-f375-423c-bec4-93fb06db97e7",
+      "name": "Search Pending Appointments",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [
+        80,
+        108
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "xcXcr0XDavk9PVcC",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// We now get merged data where the top level contains:\n// - Airtable record info (id, fields.*)\n// - AI node outputs (appointment_id, risk_score, risk_reason)\n\nfunction toPct(v) {\n  const n = Number(Array.isArray(v) ? v[0] : v);\n  if (!Number.isFinite(n)) return NaN;\n  return n <= 1 ? n * 100 : n;\n}\n\nfunction bucketScore(crPct) {\n  const n = Number(crPct);\n  if (!Number.isFinite(n)) return 58;  // neutral-ish fallback\n  if (n < 80) return 78;               // high-risk midpoint\n  if (n <= 90) return 58;              // moderate midpoint\n  return 28;                           // low-risk midpoint\n}\n\n// Extract merged data\nconst record_id = $json.id;  // Airtable record id\nconst appointment_id = $json.fields?.appointment_id || $json.appointment_id;\nconst crPct = toPct($json.fields?.completion_rate_lookup);\n\n// AI results\nlet risk_score = Number($json?.risk_score);\nlet risk_reason = $json?.risk_reason;\n\n// Fallback safety net if AI result missing\nif (!Number.isFinite(risk_score)) {\n  risk_score = bucketScore(crPct);\n  if (!risk_reason) risk_reason = 'Fallback bucket based on completion rate';\n}\n\n// Clamp and clean\nrisk_score = Math.max(0, Math.min(100, Math.round(risk_score)));\nrisk_reason = String(risk_reason || 'Scored from completion rate');\n\nreturn {\n  json: {\n    record_id,\n    appointment_id,\n    risk_score,\n    risk_reason\n  }\n};\n"
+      },
+      "id": "67f73d22-c77a-4da4-b065-b0daf52f5a4b",
+      "name": "Parse AI Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "app6L0m1D3pqV0YfO",
+          "mode": "list",
+          "cachedResultName": "Scheduler POC",
+          "cachedResultUrl": "https://airtable.com/app6L0m1D3pqV0YfO"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbl85nXM3cn31KzYd",
+          "mode": "list",
+          "cachedResultName": "Appointments",
+          "cachedResultUrl": "https://airtable.com/app6L0m1D3pqV0YfO/tbl85nXM3cn31KzYd"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "risk_score": "={{ $json.risk_score }}",
+            "appointment_id": "={{ $json.appointment_id }}",
+            "risk_reason": "={{ $json.risk_reason }}"
+          },
+          "matchingColumns": [
+            "appointment_id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "appointment_id",
+              "displayName": "appointment_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "client_name",
+              "displayName": "client_name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "scheduled_datetime",
+              "displayName": "scheduled_datetime",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "pending",
+                  "value": "pending"
+                },
+                {
+                  "name": "completed",
+                  "value": "completed"
+                },
+                {
+                  "name": "no-show",
+                  "value": "no-show"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "caregiver_id",
+              "displayName": "caregiver_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "caregiver_name",
+              "displayName": "caregiver_name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "completion_rate",
+              "displayName": "completion_rate",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "risk_score",
+              "displayName": "risk_score",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "risk_reason",
+              "displayName": "risk_reason",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Link: caregiver_name",
+              "displayName": "Link: caregiver_name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Link: completion_rate",
+              "displayName": "Link: completion_rate",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "caregiver_id (from caregiver_id)",
+              "displayName": "caregiver_id (from caregiver_id)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "4a0f00c6-604e-4933-94f1-d980e41a0fb4",
+      "name": "Update Risk Score",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [
+        1104,
+        112
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "xcXcr0XDavk9PVcC",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "maxTokens": 120,
+          "responseFormat": "json_object",
+          "temperature": 0
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        528,
+        336
+      ],
+      "id": "5e1722c3-b760-41b7-9a20-fc0aaba3902a",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "5RCRU5YXNynWfInf",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Appointment ID: {{ $json.appointment_id }}\nCompletion Rate (%): {{ $json.cr_pct }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are a healthcare scheduling risk analyst. Score appointment risk using ONLY caregiver completion rate.\n\nBuckets:\n- <80% → 70–85 (high)\n- 80–90% → 50–65 (moderate)\n- >90% → 15–40 (low)\n\nWithin each bucket, choose a score nearer the edge the rate is closest to.\nReturn ONLY JSON: {\"appointment_id\": \"<copy from input>\",\"risk_score\": <0-100 number>, \"risk_reason\": \"<short reason>\"}.\nIf completion rate is missing, set risk_score to 58 and say it's missing."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        528,
+        112
+      ],
+      "id": "25828770-0726-4249-9f74-b08de8a37538",
+      "name": "AI Risk Scoring",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ab2404f6-2e20-4d45-8a3d-428d1d34f07a",
+              "name": "appointment_id",
+              "value": "={{ $json.appointment_id }}",
+              "type": "string"
+            },
+            {
+              "id": "9e6d9d96-4009-4ae2-a2d1-155d78a1b892",
+              "name": "cr_pct",
+              "value": "={{ $json.completion_rate  <= 1 ? $json.completion_rate  * 100 :  $json.completion_rate }} ",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        304,
+        112
+      ],
+      "id": "12e06bc7-444b-4d32-ae53-4cdf6dbbc0ad",
+      "name": "Normalize Fields"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "fieldsToMatchString": "appointment_id, appointment_id",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        688,
+        304
+      ],
+      "id": "1c704fc9-99d3-4bde-bd69-42ede3e102fe",
+      "name": "Merge AI + Original"
+    },
+    {
+      "parameters": {
+        "content": "# 🧩 **Workflow Summary: Scheduler Risk Prediction POC**\n\n## 🎯 **Goal**\nThis proof-of-concept (POC) predicts the likelihood of a caregiver **no-show** for scheduled home-care appointments.\nIt uses each caregiver’s historical **completion rate** to automatically calculate a **risk score** and generate a short, human-readable explanation.\n\nThe objective is to validate whether caregiver reliability patterns can accurately identify high-risk appointments before they occur — enabling proactive coverage planning.\n---\n\n## ⚙️ **Core Logic**\n\n* **Low completion rate → higher risk**\n* **High completion rate → lower risk**\n* Thresholds:\n\n  * `<80%` → High risk (70–85)\n  * `80–90%` → Moderate risk (50–65)\n  * `>90%` → Low risk (15–40)\n\nEach appointment receives:\n\n* `risk_score` (numeric 0–100)\n* `risk_reason` (short text explanation)\n\n---\n\n## 🧭 **Workflow Steps**\n\n1. **Search Pending Appointments**\n   Reads all `Appointments` in Airtable where `status = 'pending'`.\n\n2. **Normalize Fields (Set node)**\n   Creates two simplified variables for each appointment:\n\n   * `appointment_id` → from Airtable record\n   * `cr_pct` → normalized completion rate (scales 0–1 to 0–100)\n\n3. **AI Risk Scoring (OpenRouter Chat Model)**\n   Sends the appointment’s completion rate to the AI model (`openai/gpt-4o-mini`) via OpenRouter.\n   The model returns structured JSON containing a risk score and reason.\n\n4. **Merge AI + Original (by appointment_id)**\n   Rejoins the AI output with the original Airtable record so both datasets travel together.\n\n5. **Parse AI Response (Code node)**\n\n   * Extracts `record_id`, `appointment_id`, `risk_score`, `risk_reason`\n   * Validates and clamps the score between 0–100\n   * Applies deterministic fallback logic if the AI output is missing or invalid\n\n6. **Update Risk Score (Airtable)**\n   Writes the final `risk_score` and `risk_reason` back to each corresponding appointment record in Airtable.\n",
+        "height": 1280,
+        "width": 2096,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -656,
+        -400
+      ],
+      "id": "5d631dea-a523-43ba-b257-4d9fb864b36e",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking 'Test workflow'": {
+      "main": [
+        [
+          {
+            "node": "Search Pending Appointments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Pending Appointments": {
+      "main": [
+        [
+          {
+            "node": "Normalize Fields",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge AI + Original",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Parse AI Response": {
+      "main": [
+        [
+          {
+            "node": "Update Risk Score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Risk Scoring",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Risk Scoring": {
+      "main": [
+        [
+          {
+            "node": "Merge AI + Original",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Risk Scoring",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge AI + Original": {
+      "main": [
+        [
+          {
+            "node": "Parse AI Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "0e453d39-3488-4352-adfe-1d64e71fb89b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "25785aa31ea232ccbd991ebe84ced1cac5fab052eb95a0bca0cd64ede434c4f0"
+  },
+  "id": "CvOdOsMmr7Suk1XM",
+  "tags": []
+}

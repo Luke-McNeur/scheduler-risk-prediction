@@ -1,11 +1,11 @@
-﻿appointment_id,client_name,scheduled_datetime,status,caregiver_id,caregiver_name,completion_rate,risk_score,risk_reason,Link: caregiver_name,Link: completion_rate,caregiver_id (from caregiver_id)
-APT001,Robert Johnson,10/6/2025 9:00am,pending,CG001,Maria Santos,95%,,,,,CG001
-APT002,Patricia Brown,10/6/2025 10:30am,pending,CG003,Sarah Chen,72%,,,,,CG003
-APT003,Michael Davis,10/6/2025 2:00pm,pending,CG002,John Williams,85%,,,,,CG002
-APT004,Jennifer Wilson,10/7/2025 8:00am,pending,CG005,Lisa Thompson,65%,,,,,CG005
-APT005,William Moore,10/7/2025 11:00am,pending,CG001,Maria Santos,95%,,,,,CG001
-APT006,Linda Taylor,10/7/2025 1:30pm,pending,CG004,David Martinez,88%,,,,,CG004
-APT007,James Anderson,10/7/2025 3:00pm,pending,CG003,Sarah Chen,72%,,,,,CG003
-APT008,Mary Thomas,10/8/2025 9:30am,pending,CG002,John Williams,85%,,,,,CG002
-APT009,Richard Jackson,10/8/2025 11:00am,pending,CG005,Lisa Thompson,65%,,,,,CG005
-APT010,Barbara White,10/8/2025 2:00pm,pending,CG001,Maria Santos,95%,,,,,CG001
+﻿appointment_id,client_name,scheduled_datetime_start,scheduled_datetime_end,appointment duration,status,caregiver_id,caregiver_name,completion_rate,risk_score,risk_reason,Link: caregiver_name,Link: completion_rate,caregiver_id (from caregiver_id)
+APT001,Robert Johnson,10/6/2025 9:00am,10/6/2025 1:00pm,4 hr,pending,CG001,Maria Santos,95%,,,,,CG001
+APT002,Patricia Brown,10/6/2025 10:30am,10/6/2025 6:30pm,8 hr,pending,CG003,Sarah Chen,95%,,,,,CG003
+APT003,Michael Davis,10/6/2025 2:00pm,10/6/2025 10:00pm,8 hr,pending,CG002,John Williams,65%,,,,,CG002
+APT004,Jennifer Wilson,10/7/2025 8:00am,10/7/2025 7:30pm,11 hr 30 min,pending,CG005,Lisa Thompson,65%,,,,,CG005
+APT005,William Moore,10/7/2025 11:00am,10/7/2025 6:00pm,7 hr,pending,CG001,Maria Santos,95%,,,,,CG001
+APT006,Linda Taylor,10/7/2025 1:30pm,10/7/2025 5:30pm,4 hr,pending,CG004,David Martinez,88%,,,,,CG004
+APT007,James Anderson,10/7/2025 3:00pm,10/7/2025 3:30pm,30 min,pending,CG003,Sarah Chen,95%,,,,,CG003
+APT008,Mary Thomas,10/8/2025 9:30am,10/8/2025 4:30pm,7 hr,pending,CG002,John Williams,65%,,,,,CG002
+APT009,Richard Jackson,10/8/2025 11:00am,10/8/2025 7:00pm,8 hr,pending,CG005,Lisa Thompson,65%,,,,,CG005
+APT010,Barbara White,10/8/2025 2:00pm,10/8/2025 9:00pm,7 hr,pending,CG001,Maria Santos,95%,,,,,CG001
